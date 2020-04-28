@@ -7,6 +7,8 @@ import shlex
 import subprocess
 import sys
 
+EXCLUDE_EXTENSIONS = ["cu"]
+
 try:
     basestring
 except NameError:
@@ -117,8 +119,15 @@ class CompilationDatabase(object):
         used_names = {""}
         disallowed_characters = re.compile("[^A-Za-z0-9_.+\-]")
 
-        for (config, files) in self.targets.items():
-            files = list(files)
+        for (config, file_names) in self.targets.items():
+            files = []
+            for file_name in file_names:
+                split = os.path.splitext(file_name)
+                if len(split) != 2 or "." + split[1] not in EXCLUDE_EXTENSIONS:
+                    files.append(file_name)
+            if not files:
+                continue
+
             config = {k: v for (k, v) in config}
             name = os.path.basename(os.path.commonprefix(files).rstrip("/_"))
             name = re.sub(disallowed_characters, "", name)
